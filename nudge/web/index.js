@@ -17,6 +17,35 @@ const STATIC_PATH =
 
 const app = express();
 
+// Parse JSON for API routes
+app.use(express.json());
+
+// Bouncer chat API proxy (forwards to Python Flask API)
+const BOUNCER_API_URL = process.env.BOUNCER_API_URL || "http://localhost:5000";
+
+app.post("/api/nudge/chat", async (req, res) => {
+  try {
+    const response = await fetch(`${BOUNCER_API_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Bouncer API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error("Bouncer API proxy error:", error);
+    res.status(500).json({ 
+      error: "Failed to connect to chat service",
+      response: "Sorry, I'm having trouble right now. Please try again."
+    });
+  }
+});
+
 /**
  * Public tracking endpoint for storefront beacons.
  * Accepts sendBeacon (text/plain) and JSON fetch. No auth required.
@@ -74,8 +103,9 @@ app.post(
   shopify.processWebhooks({ webhookHandlers: PrivacyWebhookHandlers })
 );
 
-// Protect authenticated admin API routes
-app.use("/api/*", shopify.validateAuthenticatedSession());
+// Bouncer chat endpoint is public (no auth required for storefront)
+// Protect other authenticated admin API routes
+app.use("/api/products/*", shopify.validateAuthenticatedSession());
 
 // Example admin API routes
 app.get("/api/products/count", async (_req, res) => {

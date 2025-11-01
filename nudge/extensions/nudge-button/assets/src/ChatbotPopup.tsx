@@ -154,7 +154,7 @@ export default function ChatbotPopup({
           const hello: Msg = {
             id: uuid(),
             role: "bot",
-            text: "Hi. I can help with price and product questions.",
+            text: "Hey. What do you want?",
             ts: Date.now()
           };
           setMsgs([hello]);
@@ -178,31 +178,102 @@ export default function ChatbotPopup({
     }
   }, [msgs]);
 
-  const send = () => {
+  const send = async () => {
     const text = value.trim();
     if (!text) return;
     const userMsg: Msg = { id: uuid(), role: "user", text, ts: Date.now() };
     setMsgs((m) => [...m, userMsg]);
     setValue("");
 
-    // Fake bot reply for MVP
+    // Get session ID from sessionStorage
+    let sessionId: string | null = null;
+    try {
+      sessionId = sessionStorage.getItem("nudge_session_id");
+      if (!sessionId) {
+        sessionId = uuid();
+        sessionStorage.setItem("nudge_session_id", sessionId);
+      }
+    } catch {}
+
+    // Call Bouncer API
     setTyping(true);
-    const t = window.setTimeout(() => {
-      const replyText =
-        text.toLowerCase().includes("discount")
-          ? "You can use code NUDGE10 for 10% off right now."
-          : "Got it. I can also apply a 10% code if you need.";
-      const botMsg: Msg = { id: uuid(), role: "bot", text: replyText, ts: Date.now() };
+    try {
+      const response = await fetch("/api/nudge/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, session_id: sessionId })
+      });
+
+      if (!response.ok) throw new Error("API error");
+
+      const data = await response.json();
+      
+      // Update session ID if provided
+      if (data.session_id && data.session_id !== sessionId) {
+        try {
+          sessionStorage.setItem("nudge_session_id", data.session_id);
+        } catch {}
+      }
+
+      // Add bot response
+      const botMsg: Msg = { 
+        id: uuid(), 
+        role: "bot", 
+        text: data.response || "Sorry, I didn't understand that.", 
+        ts: Date.now() 
+      };
       setMsgs((m) => [...m, botMsg]);
+
+      // Handle consent request if present
+      if (data.consent_request) {
+        const consentMsg: Msg = {
+          id: uuid(),
+          role: "bot",
+          text: data.consent_request,
+          ts: Date.now()
+        };
+        setTimeout(() => {
+          setMsgs((m) => [...m, consentMsg]);
+        }, 300);
+      }
+
+      // Store discount code if provided
+      if (data.discount_code) {
+        try {
+          localStorage.setItem("nudge_code", data.discount_code);
+        } catch {}
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMsg: Msg = {
+        id: uuid(),
+        role: "bot",
+        text: "Sorry, I'm having trouble right now. Please try again.",
+        ts: Date.now()
+      };
+      setMsgs((m) => [...m, errorMsg]);
+    } finally {
       setTyping(false);
-    }, 500);
-    timers.current.push(t);
+    }
   };
 
   const apply = () => {
-    const code = "NUDGE10"; // or read from DOM later if you prefer
-    // remember so we can show live price preview on next page load
-    try { localStorage.setItem("nudge_code", code); } catch {}
+    // Get discount code from localStorage (set by chat responses)
+    let code: string | null = null;
+    try {
+      code = localStorage.getItem("nudge_code");
+    } catch {}
+    
+    // Fallback to default if no code stored
+    if (!code) {
+      code = "NUDGE10";
+    }
+    
+    // Remember so we can show live price preview on next page load
+    try { 
+      localStorage.setItem("nudge_code", code); 
+    } catch {}
+    
     const redirect = location.pathname + location.search;
     const url = `/discount/${encodeURIComponent(code)}?redirect=${encodeURIComponent(redirect)}`;
     location.assign(url);
