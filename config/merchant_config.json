@@ -1,0 +1,41 @@
+{
+  "persona": "Bouncer",
+  "max_discount_pct": 20,
+  "floor_margin_pct": 18,
+  "first_offer_pct": 8,
+  "counter_step_pct": 3,
+  "min_cart_value_for_chat": 35,
+  "enable_exit_intent": true,
+  "tool_calls": ["brave", "linkedin"],
+  "sms_opt_in_enabled": true,
+  "store_name": "Beauty Essentials",
+  "valuable_traits": {
+    "beauty_influencer": {
+      "keywords": ["beauty influencer", "makeup artist", "MUA", "beauty blogger", "skincare influencer", "cosmetics influencer", "beauty content creator", "beauty youtuber", "beauty instagram", "beauty tiktok", "followers", "subscribers", "beauty UGC", "beauty creator"],
+      "discount_bonus_pct": 6.0,
+      "description": "Beauty influencers and content creators"
+    },
+    "salon_professional": {
+      "keywords": ["salon", "spa", "esthetician", "cosmetologist", "licensed esthetician", "beauty professional", "salon owner", "spa owner", "for my salon", "for my spa", "professional use"],
+      "discount_bonus_pct": 8.0,
+      "description": "Salon and spa professionals buying for business"
+    },
+    "distributor": {
+      "keywords": ["distributor", "reseller", "wholesale", "bulk", "B2B", "retailer", "store owner", "multiple units", "beauty store"],
+      "discount_bonus_pct": 7.0,
+      "description": "Distributors and resellers buying in bulk"
+    },
+    "beauty_blogger": {
+      "keywords": ["beauty blog", "beauty writer", "beauty journalist", "beauty media", "beauty press", "beauty review", "beauty article", "beauty website"],
+      "discount_bonus_pct": 4.0,
+      "description": "Beauty bloggers and media professionals"
+    },
+    "affiliate": {
+      "keywords": ["affiliate", "partner", "promote", "commission", "referral"],
+      "discount_bonus_pct": 4.0,
+      "description": "Affiliate partners"
+    }
+  },
+  "max_trait_bonus_pct": 10.0
+}
+
