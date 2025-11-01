@@ -20,6 +20,24 @@ const app = express();
 // Parse JSON for API routes
 app.use(express.json());
 
+// CORS middleware for storefront extension requests (applied before specific route handlers)
+app.use((req, res, next) => {
+  // Allow CORS for storefront extension requests
+  const origin = req.headers.origin;
+  // Allow requests from Shopify storefronts and localhost
+  if (origin && (origin.includes('.myshopify.com') || origin.includes('localhost') || process.env.NODE_ENV === 'development')) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  // Handle preflight OPTIONS requests
+  if (req.method === 'OPTIONS' && req.path !== '/api/nudge/track') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // Bouncer chat API proxy (forwards to Python Flask API)
 const BOUNCER_API_URL = process.env.BOUNCER_API_URL || "http://localhost:5000";
 

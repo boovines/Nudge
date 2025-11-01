@@ -195,10 +195,21 @@ export default function ChatbotPopup({
       }
     } catch {}
 
+    // Get API URL from data attribute (falls back to relative path for backward compatibility)
+    let apiUrl = "/api/nudge/chat";
+    try {
+      const block = document.getElementById("nudge-block");
+      const urlFromBlock = block?.getAttribute("data-api-url");
+      // Use the URL if it's a valid URL (starts with http:// or https://)
+      if (urlFromBlock && (urlFromBlock.startsWith("http://") || urlFromBlock.startsWith("https://"))) {
+        apiUrl = `${urlFromBlock.replace(/\/$/, "")}/api/nudge/chat`;
+      }
+    } catch {}
+
     // Call Bouncer API
     setTyping(true);
     try {
-      const response = await fetch("/api/nudge/chat", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, session_id: sessionId })

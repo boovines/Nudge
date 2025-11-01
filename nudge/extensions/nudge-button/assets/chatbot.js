@@ -23661,7 +23661,7 @@
             const hello = {
               id: uuid(),
               role: "bot",
-              text: "Hi. I can help with price and product questions.",
+              text: "Hey. What do you want?",
               ts: Date.now()
             };
             setMsgs([hello]);
@@ -23684,23 +23684,82 @@
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
     }, [msgs]);
-    const send = () => {
+    const send = async () => {
       const text = value.trim();
       if (!text) return;
       const userMsg = { id: uuid(), role: "user", text, ts: Date.now() };
       setMsgs((m) => [...m, userMsg]);
       setValue("");
+      let sessionId = null;
+      try {
+        sessionId = sessionStorage.getItem("nudge_session_id");
+        if (!sessionId) {
+          sessionId = uuid();
+          sessionStorage.setItem("nudge_session_id", sessionId);
+        }
+      } catch {
+      }
       setTyping(true);
-      const t = window.setTimeout(() => {
-        const replyText = text.toLowerCase().includes("discount") ? "You can use code NUDGE10 for 10% off right now." : "Got it. I can also apply a 10% code if you need.";
-        const botMsg = { id: uuid(), role: "bot", text: replyText, ts: Date.now() };
+      try {
+        const response = await fetch("/api/nudge/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, session_id: sessionId })
+        });
+        if (!response.ok) throw new Error("API error");
+        const data = await response.json();
+        if (data.session_id && data.session_id !== sessionId) {
+          try {
+            sessionStorage.setItem("nudge_session_id", data.session_id);
+          } catch {
+          }
+        }
+        const botMsg = {
+          id: uuid(),
+          role: "bot",
+          text: data.response || "Sorry, I didn't understand that.",
+          ts: Date.now()
+        };
         setMsgs((m) => [...m, botMsg]);
+        if (data.consent_request) {
+          const consentMsg = {
+            id: uuid(),
+            role: "bot",
+            text: data.consent_request,
+            ts: Date.now()
+          };
+          setTimeout(() => {
+            setMsgs((m) => [...m, consentMsg]);
+          }, 300);
+        }
+        if (data.discount_code) {
+          try {
+            localStorage.setItem("nudge_code", data.discount_code);
+          } catch {
+          }
+        }
+      } catch (error) {
+        console.error("Chat error:", error);
+        const errorMsg = {
+          id: uuid(),
+          role: "bot",
+          text: "Sorry, I'm having trouble right now. Please try again.",
+          ts: Date.now()
+        };
+        setMsgs((m) => [...m, errorMsg]);
+      } finally {
         setTyping(false);
-      }, 500);
-      timers.current.push(t);
+      }
     };
     const apply = () => {
-      const code = "NUDGE10";
+      let code = null;
+      try {
+        code = localStorage.getItem("nudge_code");
+      } catch {
+      }
+      if (!code) {
+        code = "NUDGE10";
+      }
       try {
         localStorage.setItem("nudge_code", code);
       } catch {

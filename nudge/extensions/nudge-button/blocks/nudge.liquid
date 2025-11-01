@@ -5,6 +5,7 @@
   data-discount-percent="{{ block.settings.discount_percent }}"
   data-preview="{{ block.settings.show_price_preview }}"
   data-override="{{ block.settings.override_theme_price }}"
+  data-api-url="{{ block.settings.api_url | default: 'https://dimple-hystricomorphic-long.ngrok-free.dev' }}"
 >
   <button
     id="nudge-cta"
@@ -27,7 +28,8 @@
     { "type": "text", "id": "discount_code", "label": "Discount code", "default": "NUDGE10" },
     { "type": "range", "id": "discount_percent", "label": "Discount percent", "min": 1, "max": 90, "step": 1, "default": 10 },
     { "type": "checkbox", "id": "show_price_preview", "label": "Show discounted price preview", "default": true },
-    { "type": "checkbox", "id": "override_theme_price", "label": "Replace visible theme price", "default": false }
+    { "type": "checkbox", "id": "override_theme_price", "label": "Replace visible theme price", "default": false },
+    { "type": "text", "id": "api_url", "label": "API URL", "default": "https://dimple-hystricomorphic-long.ngrok-free.dev", "info": "Your ngrok URL or production server URL" }
   ]
 }
 {% endschema %}

@@ -1,8 +1,10 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+# NOTE: For ngrok usage, update application_url and redirect_urls below with your ngrok URL
+# When using 'shopify app dev', URLs are updated automatically (see automatically_update_urls_on_dev)
 
 client_id = "f76e6856eec79af311a1df6c950105a7"
 name = "nudge"
-application_url = "https://example.com"
+application_url = "https://dimple-hystricomorphic-long.ngrok-free.dev"
 embedded = true
 
 [build]
@@ -17,4 +19,4 @@ api_version = "2026-01"
 scopes = "write_products"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://dimple-hystricomorphic-long.ngrok-free.dev/api/auth/callback" ]
